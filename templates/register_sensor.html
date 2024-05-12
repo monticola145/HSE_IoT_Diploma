@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register or Delete Sensor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input[type="text"], button {
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #5c67f2;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #4a54e1;
+        }
+        .sensor {
+            background-color: #eee;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between; /* Aligns items on opposite ends */
+            align-items: center;
+        }
+        .sensor-id {
+            flex-grow: 1; /* Allows the sensor ID to take up as much space as possible */
+            text-align: left;
+        }
+        .logout {
+            margin-top: 20px;
+        }
+        a {
+            color: #5c67f2;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Register New Sensor</h1>
+        <form action="{{ url_for('register_sensor') }}" method="post">
+            Sensor ID: <input type="text" name="sensor_id" required>
+            <button type="submit">Register</button>
+        </form>
+        <h2>Registered Sensors</h2>
+        {% for sensor_id, sensor in sensors.items() %}
+        <div class="sensor">
+            <div class="sensor-id">{{ sensor_id }}</div>
+            <form action="{{ url_for('delete_sensor', sensor_id=sensor_id) }}" method="post">
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('index') }}" class="logout">Home</a>
+    </div>
+</body>
+</html>
