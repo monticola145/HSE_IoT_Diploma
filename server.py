@@ -1,4 +1,4 @@
-# Импортируем требуемые для работы функции и библиотеки
+ Импортируем требуемые для работы функции и библиотеки
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import (
     LoginManager,
@@ -9,17 +9,24 @@ from flask_login import (
     current_user,
 )
 from flask_sqlalchemy import SQLAlchemy
+from flask_session import Session
 import secrets
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
+import redis
 
 
 app = Flask(__name__)  # Инициируем приложение
 app.secret_key = secrets.token_hex(24)  # Генерируем уникальный ключ сессии
 
-# Подключение и настройка базы данных
+# Подключение и настройка базы данных и хранилища сеансов
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///sensors_database.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_REDIS"] = redis.from_url("redis://localhost:6379/0")
+
+Session(app)  # Создаём экземпляр объекта Session для управления сеансами через Redis
+
 db = SQLAlchemy(app, session_options={"expire_on_commit": False})  # Инициализируем БД
 
 # Инициируем менеджера логина для контроля за сессиями
@@ -30,8 +37,6 @@ login_manager.login_view = "login"  # Указываем страницу для
 users = {
     "admin": {"password": generate_password_hash("password")}
 }  # Создаём хранилище данных пользователей с хешированными паролями
-
-sensors = {}  # Создаём хранилище объектов датчиков
 
 
 class Sensor(db.Model):  # Создаём модель для сенсоров в БД
@@ -57,6 +62,7 @@ class User(UserMixin):  # Создаём класс User для упрощени
 
 @login_manager.user_loader  # Загрузка пользователей из хранилища (строки 30-32)
 def user_loader(username):
+    """Функция загрузки пользователей"""
     if username not in users:
         return
 
@@ -98,6 +104,7 @@ def logout():
 @app.route("/register_sensor", methods=["GET", "POST"])  # Устанавливаем методы GET и POST
 @login_required  # Убеждаемся, что действия может выполнять только авторизованный пользователь
 def register_sensor():
+    """Функция регистрации датчиков"""
     if request.method == "POST":  # При попытке создания записи...
         sensor_id = request.form.get("sensor_id")   # Получаем sensor_id == название сенсора, вводимое пользователем
         if not Sensor.query.filter_by(sensor_id=sensor_id).first():  # Проверяем наличие в БД, если нет, то...
@@ -130,6 +137,7 @@ def delete_sensor(sensor_id):
 
 @app.route("/update", methods=["POST"])  # Устанавливаем метод POST для создания новых записей (сенсеров)
 def update():
+    """Функция передачи данных с датчиков на сервер"""
     token = request.headers.get("Authorization")  # Извлекаем токен из заголовка Authorization
     data = request.json.get("data")  # Извлекаем данные из запроса
     if token and data:  # При успешном получении токена и данных...
@@ -152,6 +160,7 @@ def update():
 @app.route("/")
 @login_required
 def index():
+    """Функция главной страницы приложения"""
     db.session.expire_all()  # Обновление состояния сессии (чтобы не кешировалась в браузере, в целях безопасности)
     sensors_list = Sensor.query.all()  # Находим все сенсоры
     sensor_data = {sensor.sensor_id: sensor.data for sensor in sensors_list}  # Выводим их по порядку, готовя к рендеру
@@ -159,6 +168,7 @@ def index():
 
 @app.after_request  # Устанавливает заголовок no-store, чтобы предотвратить кеширование
 def add_header(response):  
+    """Функция установки заголовка"""
     response.headers['Cache-Control'] = 'no-store'
     return response
 
