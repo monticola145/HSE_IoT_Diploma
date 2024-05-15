@@ -1,4 +1,4 @@
- Импортируем требуемые для работы функции и библиотеки
+# Импортируем требуемые для работы функции и библиотеки
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import (
     LoginManager,
