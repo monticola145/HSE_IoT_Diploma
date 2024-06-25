@@ -4,7 +4,7 @@
 ## Развертывание и запуск
 Для развертывания и запуска ЛОКАЛЬНОГО сервера, необходимо:
 ### 1) Клонировать репозиторий на устройство
-git clone https://github.com/monticola145/HSE_IoT_Diploma.git
+git clone https://github.com/monticola145/IoT_Project.git
 ### 2) Развернуть локальное окружение и установить зависимости
 python -m venv venv && source venv/Scripts/activate<br />
 pip install -r requirements.txt
